@@ -68,8 +68,6 @@ func TestGetByID_NotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
-// --- List ---
-
 func TestList_Success(t *testing.T) {
 	n1 := domain.New("1", domain.ChannelSMS, "mock1", domain.PriorityNormal)
 	n2 := domain.New("2", domain.ChannelSMS, "mock2", domain.PriorityNormal)
@@ -94,47 +92,48 @@ func TestList_Success(t *testing.T) {
 	assert.Equal(t, n2, results[1])
 }
 
-// --- Cancel ---
-
 func TestCancel_Success(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
+	repo := &mockRepository{
+		CancelFn: func(ctx context.Context, id string) error {
+			return nil
+		},
+	}
 	s := newService(repo)
 	ctx := context.Background()
 
-	// TODO: repo.CancelFn nil dönsün
-	err := s.Cancel(ctx, "some-id")
+	err := s.Cancel(ctx, uuid.New().String())
 	assert.NoError(t, err)
 }
 
 func TestCancel_NotFound(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
+	repo := &mockRepository{
+		CancelFn: func(ctx context.Context, id string) error {
+			return domain.ErrNotFound
+		},
+	}
 	s := newService(repo)
 	ctx := context.Background()
 
-	// TODO: repo.CancelFn → ErrNotFound dönsün
-	err := s.Cancel(ctx, "non-existent")
+	err := s.Cancel(ctx, uuid.New().String())
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
 func TestCancel_CannotCancel(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
+	repo := &mockRepository{
+		CancelFn: func(ctx context.Context, id string) error {
+			return domain.ErrCannotCancel
+		},
+	}
 	s := newService(repo)
 	ctx := context.Background()
 
-	// TODO: repo.CancelFn → ErrCannotCancel dönsün
-	err := s.Cancel(ctx, "sent-id")
+	err := s.Cancel(ctx, uuid.New().String())
 	assert.ErrorIs(t, err, domain.ErrCannotCancel)
 }
-
-// --- GetBatch ---
 
 func TestGetBatch_Success(t *testing.T) {
 	t.Skip("not implemented")
 
-	// TODO: repo.GetBatchFn bir batch dönsün
 	require.Fail(t, "not implemented")
 }
 
