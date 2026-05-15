@@ -70,7 +70,7 @@ type Notification struct {
 	ErrorMessage   *string `gorm:"type:text"`
 }
 
-func New(recipient string, channel Channel, content string, priority Priority) *Notification {
+func NewNotification(recipient string, channel Channel, content string, priority Priority) *Notification {
 	now := time.Now().UTC()
 	return &Notification{
 		ID:        uuid.NewString(),

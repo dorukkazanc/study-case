@@ -17,7 +17,7 @@ func NewNotificationService(repo domain.Repository, queue queue.Queue) Service {
 }
 
 func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*domain.Notification, error) {
-	notification := domain.New(req.Recipient, req.Channel, req.Content, req.Priority)
+	notification := domain.NewNotification(req.Recipient, req.Channel, req.Content, req.Priority)
 	if err := s.repo.Create(ctx, notification); err != nil {
 		return nil, err
 	}

@@ -78,8 +78,8 @@ func TestGetByID_NotFound(t *testing.T) {
 }
 
 func TestList_Success(t *testing.T) {
-	n1 := domain.New("1", domain.ChannelSMS, "mock1", domain.PriorityNormal)
-	n2 := domain.New("2", domain.ChannelSMS, "mock2", domain.PriorityNormal)
+	n1 := domain.NewNotification("1", domain.ChannelSMS, "mock1", domain.PriorityNormal)
+	n2 := domain.NewNotification("2", domain.ChannelSMS, "mock2", domain.PriorityNormal)
 
 	repo := &mockRepository{
 		ListFn: func(ctx context.Context, filter domain.Filter) ([]*domain.Notification, int, error) {
