@@ -2,25 +2,35 @@ package service
 
 import (
 	"context"
+	"study-case/internal/queue"
 
 	domain "study-case/internal/domain/notification"
 )
 
 type notificationService struct {
-	repo domain.Repository
+	repo  domain.Repository
+	queue queue.Queue
 }
 
-func NewNotificationService(repo domain.Repository) Service {
-	return &notificationService{repo: repo}
+func NewNotificationService(repo domain.Repository, queue queue.Queue) Service {
+	return &notificationService{repo: repo, queue: queue}
 }
 
 func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*domain.Notification, error) {
 	notification := domain.New(req.Recipient, req.Channel, req.Content, req.Priority)
-	err := s.repo.Create(ctx, notification)
-
-	if err != nil {
+	if err := s.repo.Create(ctx, notification); err != nil {
 		return nil, err
 	}
+
+	notification.MarkQueued()
+	if err := s.repo.UpdateStatus(ctx, notification.ID, domain.StatusQueued); err != nil {
+		return nil, err
+	}
+
+	if err := s.queue.Enqueue(ctx, notification); err != nil {
+		return nil, err
+	}
+
 	return notification, nil
 }
 
