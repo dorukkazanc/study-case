@@ -4,10 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"study-case/internal/api/handler"
-	svc "study-case/internal/service/notification"
+	"study-case/internal/service"
 )
 
-func NewRouter(notifSvc svc.Service) *gin.Engine {
+func NewRouter(notifSvc service.Service) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
