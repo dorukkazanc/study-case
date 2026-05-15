@@ -90,6 +90,8 @@ func TestList_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, total)
 	assert.Len(t, results, 2)
+	assert.Equal(t, n1, results[0])
+	assert.Equal(t, n2, results[1])
 }
 
 // --- Cancel ---

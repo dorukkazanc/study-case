@@ -33,7 +33,7 @@ func (s *notificationService) GetByID(ctx context.Context, id string) (*domain.N
 }
 
 func (s *notificationService) List(ctx context.Context, filter domain.Filter) ([]*domain.Notification, int, error) {
-	panic("not implemented")
+	return s.repo.List(ctx, filter)
 }
 
 func (s *notificationService) Cancel(ctx context.Context, id string) error {
