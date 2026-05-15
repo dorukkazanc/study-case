@@ -64,10 +64,10 @@ func (w *Worker) runLoop(ctx context.Context, channel domain.Channel) {
 			continue
 		}
 
-		w.process(ctx, n)
+		w.Process(ctx, n)
 	}
 }
 
-func (w *Worker) process(ctx context.Context, n *domain.Notification) {
+func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 	panic("not implemented")
 }
