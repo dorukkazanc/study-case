@@ -5,22 +5,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	svc "study-case/internal/service/notification"
+	"study-case/internal/service"
 )
 
 type NotificationHandler struct {
-	svc svc.Service
+	svc service.Service
 }
 
-func NewNotificationHandler(svc svc.Service) *NotificationHandler {
+func NewNotificationHandler(svc service.Service) *NotificationHandler {
 	return &NotificationHandler{svc: svc}
 }
 
 type createRequest struct {
-	Recipient      string  `json:"recipient"       binding:"required"`
-	Channel        string  `json:"channel"         binding:"required"`
-	Content        string  `json:"content"         binding:"required"`
-	Priority       string  `json:"priority"`
+	Recipient      string  `json:"recipient"        binding:"required"`
+	Channel        string  `json:"channel"          binding:"required,oneof=sms email push"`
+	Content        string  `json:"content"          binding:"required,max=1600"`
+	Priority       string  `json:"priority"         binding:"omitempty,oneof=high normal low"`
 	IdempotencyKey *string `json:"idempotency_key"`
 	ScheduledAt    *string `json:"scheduled_at"`
 }
