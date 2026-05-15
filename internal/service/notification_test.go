@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -37,11 +38,21 @@ func TestCreate_Success(t *testing.T) {
 }
 
 func TestGetByID_Success(t *testing.T) {
-	t.Skip("not implemented")
+	expectedId := uuid.New().String()
+	repo := &mockRepository{
+		GetByIDFn: func(ctx context.Context, id string) (*domain.Notification, error) {
+			return &domain.Notification{
+				ID: expectedId,
+			}, nil
+		},
+	}
+	s := newService(repo)
+	ctx := context.Background()
 
-	// TODO: repo.GetByIDFn bir notification dönsün
-	// GetByID çağır → aynı notification gelsin
-	require.Fail(t, "not implemented")
+	result, err := s.GetByID(ctx, expectedId)
+
+	require.NoError(t, err)
+	assert.Equal(t, result.ID, expectedId)
 }
 
 func TestGetByID_NotFound(t *testing.T) {
