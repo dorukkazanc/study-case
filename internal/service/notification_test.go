@@ -36,38 +36,6 @@ func TestCreate_Success(t *testing.T) {
 	assert.Equal(t, "+9011111111", result.Recipient)
 }
 
-func TestCreate_InvalidChannel(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
-	s := newService(repo)
-	ctx := context.Background()
-
-	// TODO: geçersiz channel → repo hiç çağrılmamalı, ErrInvalidChannel dönmeli
-	_, err := s.Create(ctx, service.CreateRequest{Channel: "invalid"})
-	assert.ErrorIs(t, err, domain.ErrInvalidChannel)
-}
-
-func TestCreate_InvalidPriority(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
-	s := newService(repo)
-	ctx := context.Background()
-
-	// TODO: geçersiz priority → repo hiç çağrılmamalı, ErrInvalidPriority dönmeli
-	_, err := s.Create(ctx, service.CreateRequest{Priority: "invalid"})
-	assert.ErrorIs(t, err, domain.ErrInvalidPriority)
-}
-
-func TestCreate_DuplicateIdempotencyKey(t *testing.T) {
-	t.Skip("not implemented")
-
-	// TODO: repo.ExistsByIdempotencyKeyFn → true dönsün
-	// Create çağır → ErrDuplicateIdempotencyKey beklenir
-	require.Fail(t, "not implemented")
-}
-
-// --- GetByID ---
-
 func TestGetByID_Success(t *testing.T) {
 	t.Skip("not implemented")
 
