@@ -29,7 +29,7 @@ func (s *notificationService) CreateBatch(ctx context.Context, req CreateBatchRe
 }
 
 func (s *notificationService) GetByID(ctx context.Context, id string) (*domain.Notification, error) {
-	panic("not implemented")
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *notificationService) List(ctx context.Context, filter domain.Filter) ([]*domain.Notification, int, error) {
