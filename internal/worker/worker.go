@@ -69,5 +69,22 @@ func (w *Worker) runLoop(ctx context.Context, channel domain.Channel) {
 }
 
 func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
-	panic("not implemented")
+	if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusProcessing); err != nil {
+		return
+	}
+
+	id, err := w.provider.Send(ctx, n)
+	if err != nil {
+		w.handleFailure(ctx, n, err)
+		return
+	}
+	n.MarkSent(id)
+
+	if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusSent, domain.WithProviderID(id)); err != nil {
+		return
+	}
+}
+
+func (w *Worker) handleFailure(ctx context.Context, notification *domain.Notification, err error) {
+
 }
