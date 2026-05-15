@@ -132,9 +132,29 @@ func TestCancel_CannotCancel(t *testing.T) {
 }
 
 func TestGetBatch_Success(t *testing.T) {
-	t.Skip("not implemented")
+	batchID := uuid.New().String()
+	repo := &mockRepository{
+		GetBatchFn: func(ctx context.Context, batchID string) (*domain.Batch, error) {
+			return &domain.Batch{
+				ID:        batchID,
+				Failed:    0,
+				Cancelled: 0,
+				Sent:      10,
+				Total:     10,
+				Queued:    0,
+			}, nil
+		},
+	}
+	s := newService(repo)
+	ctx := context.Background()
 
-	require.Fail(t, "not implemented")
+	result, err := s.GetBatch(ctx, batchID)
+
+	require.NoError(t, err)
+	assert.Equal(t, 10, result.Total)
+	assert.Equal(t, 0, result.Queued)
+	assert.Equal(t, 10, result.Sent)
+	assert.Equal(t, batchID, result.ID)
 }
 
 func TestGetBatch_NotFound(t *testing.T) {
