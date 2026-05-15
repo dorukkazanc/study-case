@@ -37,7 +37,7 @@ func (s *notificationService) List(ctx context.Context, filter domain.Filter) ([
 }
 
 func (s *notificationService) Cancel(ctx context.Context, id string) error {
-	panic("not implemented")
+	return s.repo.Cancel(ctx, id)
 }
 
 func (s *notificationService) GetBatch(ctx context.Context, batchID string) (*domain.Batch, error) {
