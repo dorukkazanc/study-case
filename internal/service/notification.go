@@ -41,5 +41,5 @@ func (s *notificationService) Cancel(ctx context.Context, id string) error {
 }
 
 func (s *notificationService) GetBatch(ctx context.Context, batchID string) (*domain.Batch, error) {
-	panic("not implemented")
+	return s.repo.GetBatch(ctx, batchID)
 }
