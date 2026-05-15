@@ -33,7 +33,7 @@ func TestCreate_Success(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, domain.StatusPending, result.Status)
+	assert.Equal(t, domain.StatusQueued, result.Status)
 	assert.Equal(t, "+9011111111", result.Recipient)
 }
 
