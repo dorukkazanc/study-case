@@ -38,7 +38,7 @@ func TestCreate_Success(t *testing.T) {
 }
 
 func TestGetByID_Success(t *testing.T) {
-	expectedId := uuid.New().String()
+	expectedId := uuid.NewString()
 	repo := &mockRepository{
 		GetByIDFn: func(ctx context.Context, id string) (*domain.Notification, error) {
 			return &domain.Notification{
@@ -101,7 +101,7 @@ func TestCancel_Success(t *testing.T) {
 	s := newService(repo)
 	ctx := context.Background()
 
-	err := s.Cancel(ctx, uuid.New().String())
+	err := s.Cancel(ctx, uuid.NewString())
 	assert.NoError(t, err)
 }
 
@@ -114,7 +114,7 @@ func TestCancel_NotFound(t *testing.T) {
 	s := newService(repo)
 	ctx := context.Background()
 
-	err := s.Cancel(ctx, uuid.New().String())
+	err := s.Cancel(ctx, uuid.NewString())
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
@@ -127,12 +127,12 @@ func TestCancel_CannotCancel(t *testing.T) {
 	s := newService(repo)
 	ctx := context.Background()
 
-	err := s.Cancel(ctx, uuid.New().String())
+	err := s.Cancel(ctx, uuid.NewString())
 	assert.ErrorIs(t, err, domain.ErrCannotCancel)
 }
 
 func TestGetBatch_Success(t *testing.T) {
-	batchID := uuid.New().String()
+	batchID := uuid.NewString()
 	repo := &mockRepository{
 		GetBatchFn: func(ctx context.Context, batchID string) (*domain.Batch, error) {
 			return &domain.Batch{
@@ -158,12 +158,14 @@ func TestGetBatch_Success(t *testing.T) {
 }
 
 func TestGetBatch_NotFound(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
+	repo := &mockRepository{
+		GetBatchFn: func(ctx context.Context, batchID string) (*domain.Batch, error) {
+			return nil, domain.ErrBatchNotFound
+		},
+	}
 	s := newService(repo)
 	ctx := context.Background()
 
-	// TODO: repo.GetBatchFn → ErrBatchNotFound dönsün
-	_, err := s.GetBatch(ctx, "non-existent")
+	_, err := s.GetBatch(ctx, uuid.NewString())
 	assert.ErrorIs(t, err, domain.ErrBatchNotFound)
 }
