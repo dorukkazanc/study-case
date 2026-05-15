@@ -2,9 +2,11 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
+	domain "study-case/internal/domain/notification"
 	"study-case/internal/service"
 )
 
@@ -38,25 +40,152 @@ type listQuery struct {
 }
 
 func (h *NotificationHandler) Create(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	var req createRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	priority := domain.PriorityNormal
+	if req.Priority != "" {
+		priority = domain.Priority(req.Priority)
+	}
+
+	svcReq := service.CreateRequest{
+		Recipient:      req.Recipient,
+		Channel:        domain.Channel(req.Channel),
+		Content:        req.Content,
+		Priority:       priority,
+		IdempotencyKey: req.IdempotencyKey,
+	}
+
+	if req.ScheduledAt != nil {
+		t, err := time.Parse(time.RFC3339, *req.ScheduledAt)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid scheduled_at format"})
+			return
+		}
+		svcReq.ScheduledAt = &t
+	}
+
+	n, err := h.svc.Create(c.Request.Context(), svcReq)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, toNotificationResponse(n))
 }
 
 func (h *NotificationHandler) CreateBatch(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	var req createBatchRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	notifications := make([]service.CreateRequest, 0, len(req.Notifications))
+	for _, n := range req.Notifications {
+		priority := domain.PriorityNormal
+		if n.Priority != "" {
+			priority = domain.Priority(n.Priority)
+		}
+		notifications = append(notifications, service.CreateRequest{
+			Recipient:      n.Recipient,
+			Channel:        domain.Channel(n.Channel),
+			Content:        n.Content,
+			Priority:       priority,
+			IdempotencyKey: n.IdempotencyKey,
+		})
+	}
+
+	result, err := h.svc.CreateBatch(c.Request.Context(), service.CreateBatchRequest{
+		Notifications: notifications,
+	})
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, createBatchResponse{
+		BatchID: result.BatchID,
+		Count:   result.Count,
+	})
 }
 
 func (h *NotificationHandler) GetByID(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	id := c.Param("id")
+
+	n, err := h.svc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, toNotificationResponse(n))
 }
 
 func (h *NotificationHandler) List(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	var q listQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	filter := domain.Filter{
+		Page:     q.Page,
+		PageSize: q.PageSize,
+	}
+	if q.Status != "" {
+		s := domain.Status(q.Status)
+		filter.Status = &s
+	}
+	if q.Channel != "" {
+		ch := domain.Channel(q.Channel)
+		filter.Channel = &ch
+	}
+	if q.BatchID != "" {
+		filter.BatchID = &q.BatchID
+	}
+
+	notifications, total, err := h.svc.List(c.Request.Context(), filter)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	resp := make([]*notificationResponse, 0, len(notifications))
+	for _, n := range notifications {
+		resp = append(resp, toNotificationResponse(n))
+	}
+
+	c.JSON(http.StatusOK, listResponse{
+		Notifications: resp,
+		Total:         total,
+		Page:          q.Page,
+		PageSize:      q.PageSize,
+	})
 }
 
 func (h *NotificationHandler) Cancel(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	id := c.Param("id")
+
+	if err := h.svc.Cancel(c.Request.Context(), id); err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func (h *NotificationHandler) GetBatch(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	batchID := c.Param("batchID")
+
+	batch, err := h.svc.GetBatch(c.Request.Context(), batchID)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, toBatchResponse(batch))
 }
