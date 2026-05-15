@@ -71,11 +71,25 @@ func TestGetByID_NotFound(t *testing.T) {
 // --- List ---
 
 func TestList_Success(t *testing.T) {
-	t.Skip("not implemented")
+	n1 := domain.New("1", domain.ChannelSMS, "mock1", domain.PriorityNormal)
+	n2 := domain.New("2", domain.ChannelSMS, "mock2", domain.PriorityNormal)
 
-	// TODO: repo.ListFn birkaç notification dönsün
-	// List çağır → aynı sonuçlar gelsin
-	require.Fail(t, "not implemented")
+	repo := &mockRepository{
+		ListFn: func(ctx context.Context, filter domain.Filter) ([]*domain.Notification, int, error) {
+			return []*domain.Notification{n1, n2}, 2, nil
+		},
+	}
+	s := newService(repo)
+	ctx := context.Background()
+
+	results, total, err := s.List(ctx, domain.Filter{
+		Page:     1,
+		PageSize: 10,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 2, total)
+	assert.Len(t, results, 2)
 }
 
 // --- Cancel ---
