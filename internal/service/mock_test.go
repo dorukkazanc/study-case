@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"time"
 
 	domain "study-case/internal/domain/notification"
 )
@@ -53,3 +54,15 @@ func (m *mockRepository) UpdateBatchCounters(ctx context.Context, batchID string
 func (m *mockRepository) ExistsByIdempotencyKey(ctx context.Context, key string) (bool, error) {
 	return m.ExistsByIdempotencyKeyFn(ctx, key)
 }
+
+type mockQueue struct {
+}
+
+func (m *mockQueue) Enqueue(ctx context.Context, n *domain.Notification) error { return nil }
+func (m *mockQueue) Dequeue(ctx context.Context, ch domain.Channel) (*domain.Notification, error) {
+	return nil, nil
+}
+func (m *mockQueue) EnqueueDelayed(ctx context.Context, n *domain.Notification, delay time.Duration) error {
+	return nil
+}
+func (m *mockQueue) MoveToDead(ctx context.Context, n *domain.Notification) error { return nil }
