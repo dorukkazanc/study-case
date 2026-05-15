@@ -56,13 +56,15 @@ func TestGetByID_Success(t *testing.T) {
 }
 
 func TestGetByID_NotFound(t *testing.T) {
-	t.Skip("not implemented")
-	repo := &mockRepository{}
+	repo := &mockRepository{
+		GetByIDFn: func(ctx context.Context, id string) (*domain.Notification, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
 	s := newService(repo)
 	ctx := context.Background()
 
-	// TODO: repo.GetByIDFn → ErrNotFound dönsün
-	_, err := s.GetByID(ctx, "non-existent")
+	_, err := s.GetByID(ctx, uuid.New().String())
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
