@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -14,8 +16,10 @@ import (
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 
+	"study-case/internal/api"
 	"study-case/internal/config"
 	pgrepo "study-case/internal/repository/postgres"
+	"study-case/internal/service"
 )
 
 func main() {
@@ -24,12 +28,36 @@ func main() {
 	db := mustConnectDB(cfg)
 	mustMigrate(cfg)
 
-	_ = pgrepo.NewNotificationRepository(db)
+	repo := pgrepo.NewNotificationRepository(db)
+	svc := service.NewNotificationService(repo)
+	router := api.NewNotificationRouter(svc)
+
+	srv := &http.Server{
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      router,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	go func() {
+		log.Printf("server started on :%s", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
 	<-ctx.Done()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown error: %v", err)
+	}
+	log.Println("server stopped")
 }
 
 func mustConnectDB(cfg *config.Config) *gorm.DB {

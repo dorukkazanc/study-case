@@ -13,7 +13,7 @@ import (
 )
 
 func newService(repo *mockRepository) service.Service {
-	return service.New(repo)
+	return service.NewNotificationService(repo)
 }
 
 func TestCreate_Success(t *testing.T) {

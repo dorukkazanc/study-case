@@ -10,7 +10,7 @@ type notificationService struct {
 	repo domain.Repository
 }
 
-func New(repo domain.Repository) Service {
+func NewNotificationService(repo domain.Repository) Service {
 	return &notificationService{repo: repo}
 }
 

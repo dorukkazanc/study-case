@@ -7,7 +7,7 @@ import (
 	"study-case/internal/service"
 )
 
-func NewRouter(notifSvc service.Service) *gin.Engine {
+func NewNotificationRouter(notifSvc service.Service) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
