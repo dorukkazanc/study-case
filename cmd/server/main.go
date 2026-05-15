@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"study-case/internal/queue/redis"
 	"syscall"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	goredis "github.com/redis/go-redis/v9"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -28,8 +30,15 @@ func main() {
 	db := mustConnectDB(cfg)
 	mustMigrate(cfg)
 
+	rds := goredis.NewClient(&goredis.Options{
+		Addr:     cfg.Redis.Addr,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+
 	repo := pgrepo.NewNotificationRepository(db)
-	svc := service.NewNotificationService(repo)
+	queue := redis.NewPriorityQueue(rds)
+	svc := service.NewNotificationService(repo, queue)
 	router := api.NewNotificationRouter(svc)
 
 	srv := &http.Server{
