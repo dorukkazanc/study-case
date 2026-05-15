@@ -12,8 +12,8 @@ import (
 	"study-case/internal/service"
 )
 
-func newService(repo *mockRepository) service.Service {
-	return service.NewNotificationService(repo)
+func newService(repo *mockRepository, queue *mockQueue) service.Service {
+	return service.NewNotificationService(repo, queue)
 }
 
 func TestCreate_Success(t *testing.T) {
@@ -21,8 +21,13 @@ func TestCreate_Success(t *testing.T) {
 		CreateFn: func(ctx context.Context, n *domain.Notification) error {
 			return nil
 		},
+		UpdateStatusFn: func(ctx context.Context, id string, status domain.Status, opts ...domain.UpdateOption) error {
+			return nil
+		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	result, err := s.Create(ctx, service.CreateRequest{
@@ -46,7 +51,9 @@ func TestGetByID_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	result, err := s.GetByID(ctx, expectedId)
@@ -61,7 +68,9 @@ func TestGetByID_NotFound(t *testing.T) {
 			return nil, domain.ErrNotFound
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	_, err := s.GetByID(ctx, uuid.New().String())
@@ -77,7 +86,9 @@ func TestList_Success(t *testing.T) {
 			return []*domain.Notification{n1, n2}, 2, nil
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	results, total, err := s.List(ctx, domain.Filter{
@@ -98,7 +109,9 @@ func TestCancel_Success(t *testing.T) {
 			return nil
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	err := s.Cancel(ctx, uuid.NewString())
@@ -111,7 +124,9 @@ func TestCancel_NotFound(t *testing.T) {
 			return domain.ErrNotFound
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	err := s.Cancel(ctx, uuid.NewString())
@@ -124,7 +139,9 @@ func TestCancel_CannotCancel(t *testing.T) {
 			return domain.ErrCannotCancel
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	err := s.Cancel(ctx, uuid.NewString())
@@ -145,7 +162,9 @@ func TestGetBatch_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	result, err := s.GetBatch(ctx, batchID)
@@ -163,7 +182,9 @@ func TestGetBatch_NotFound(t *testing.T) {
 			return nil, domain.ErrBatchNotFound
 		},
 	}
-	s := newService(repo)
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
 	ctx := context.Background()
 
 	_, err := s.GetBatch(ctx, uuid.NewString())
