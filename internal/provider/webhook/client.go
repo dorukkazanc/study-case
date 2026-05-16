@@ -65,5 +65,16 @@ func (c *Client) Send(ctx context.Context, n *domain.Notification) (string, erro
 		return "", fmt.Errorf("webhook returned status %d", resp.StatusCode)
 	}
 
-	return resp.Header.Get("X-Request-Id"), nil
+	var result struct {
+		MessageID string `json:"messageId"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err == nil && result.MessageID != "" {
+		return result.MessageID, nil
+	}
+
+	if id := resp.Header.Get("X-Request-Id"); id != "" {
+		return id, nil
+	}
+
+	return resp.Header.Get("X-Webhook-Id"), nil
 }
