@@ -79,3 +79,7 @@ func (q *PriorityQueue) MoveToDead(ctx context.Context, n *domain.Notification) 
 	}
 	return q.client.LPush(ctx, keyDead, string(data)).Err()
 }
+
+func (q *PriorityQueue) Depth(ctx context.Context, channel domain.Channel) (*domain.Notification, error) {
+	return nil, fmt.Errorf("not implemented")
+}

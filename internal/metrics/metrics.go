@@ -19,8 +19,16 @@ var (
 		},
 		[]string{"method", "path", "status"},
 	)
+
+	QueueDepth = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "notification_queue_depth",
+			Help: "Current number of notifications in queue per channel",
+		},
+		[]string{"channel"},
+	)
 )
 
 func init() {
-	prometheus.MustRegister(NotificationsCreated, HTTPRequestDuration)
+	prometheus.MustRegister(NotificationsCreated, HTTPRequestDuration, QueueDepth)
 }
