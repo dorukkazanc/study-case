@@ -4,6 +4,7 @@ import (
 	"context"
 	"study-case/internal/metrics"
 	"study-case/internal/queue"
+	"time"
 
 	domain "study-case/internal/domain/notification"
 
@@ -21,7 +22,6 @@ func NewNotificationService(repo domain.Repository, queue queue.Queue, log zerol
 }
 
 func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*domain.Notification, error) {
-	notification := domain.NewNotification(req.Recipient, req.Channel, req.Content, req.Priority)
 	if req.IdempotencyKey != nil {
 		exists, err := s.repo.ExistsByIdempotencyKey(ctx, *req.IdempotencyKey)
 		if err != nil {
@@ -31,27 +31,34 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 			return nil, domain.ErrDuplicateIdempotencyKey
 		}
 	}
-	notification.IdempotencyKey = req.IdempotencyKey
 
-	if err := s.repo.Create(ctx, notification); err != nil {
+	n := domain.NewNotification(req.Recipient, req.Channel, req.Content, req.Priority)
+	n.IdempotencyKey = req.IdempotencyKey
+	n.ScheduledAt = req.ScheduledAt
+
+	if err := s.repo.Create(ctx, n); err != nil {
 		return nil, err
 	}
 
-	notification.MarkQueued()
-	if err := s.repo.UpdateStatus(ctx, notification.ID, domain.StatusQueued); err != nil {
+	n.MarkQueued()
+	if err := s.repo.UpdateStatus(ctx, n.ID, domain.StatusQueued); err != nil {
 		return nil, err
 	}
 
-	if err := s.queue.Enqueue(ctx, notification); err != nil {
+	if err := s.enqueue(ctx, n); err != nil {
 		return nil, err
 	}
 
-	metrics.NotificationsCreated.WithLabelValues(
-		string(notification.Channel),
-		string(notification.Priority),
-	).Inc()
-	s.log.Info().Str("id", notification.ID).Str("channel", string(notification.Channel)).Msg("notification created")
-	return notification, nil
+	metrics.NotificationsCreated.WithLabelValues(string(n.Channel), string(n.Priority)).Inc()
+	s.log.Info().Str("id", n.ID).Str("channel", string(n.Channel)).Msg("notification created")
+	return n, nil
+}
+
+func (s *notificationService) enqueue(ctx context.Context, n *domain.Notification) error {
+	if n.ScheduledAt != nil {
+		return s.queue.EnqueueDelayed(ctx, n, time.Until(*n.ScheduledAt))
+	}
+	return s.queue.Enqueue(ctx, n)
 }
 
 func (s *notificationService) CreateBatch(ctx context.Context, req CreateBatchRequest) (*BatchResult, error) {
