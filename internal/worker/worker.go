@@ -139,7 +139,13 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 	if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusQueued, domain.WithErrorMessage(err.Error())); err != nil {
 		return
 	}
+	n.RetryCount++
 	n.MarkQueued()
+
+	if n.BatchID != nil {
+		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, domain.StatusQueued)
+	}
+
 	delay := 5 * time.Second * (1 << n.RetryCount)
 	w.log.Warn().Str("id", n.ID).Int("retry_count", n.RetryCount).Dur("delay", delay).Msg("notification scheduled for retry")
 	if err := w.queue.EnqueueDelayed(ctx, n, delay); err != nil {
