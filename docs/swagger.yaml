@@ -51,7 +51,7 @@ definitions:
         example: sms
         type: string
       content:
-        example: Hello {{name}}, your code is {{code}}
+        example: Hello {name}, your code is {code}
         maxLength: 1600
         type: string
       idempotency_key:
