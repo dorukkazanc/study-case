@@ -54,7 +54,7 @@ curl -X POST http://localhost:8080/api/v1/notifications \
   -d '{
     "recipient": "ahmet@example.com",
     "channel": "email",
-    "content": "Randevunuz yarın saat 10:00'\''da.",
+    "content": "Randevunuz yarın saat 10:00",
     "priority": "normal",
     "scheduled_at": "2026-05-17T10:00:00Z"
   }'
