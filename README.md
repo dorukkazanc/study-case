@@ -29,8 +29,9 @@ PROVIDER_WEBHOOK_URL=https://... docker compose up --build
 | GET | `/swagger/index.html` | API dokümantasyonu |
 | GET | `/ws/notifications/:id` | WebSocket — real-time status güncellemeleri |
 
-### Örnek İstek
+### Örnek İstekler
 
+**Tekil bildirim:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/notifications \
   -H "Content-Type: application/json" \
@@ -44,6 +45,46 @@ curl -X POST http://localhost:8080/api/v1/notifications \
       "code": "123456"
     }
   }'
+```
+
+**Zamanlanmış bildirim (`scheduled_at`):**
+```bash
+curl -X POST http://localhost:8080/api/v1/notifications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient": "ahmet@example.com",
+    "channel": "email",
+    "content": "Randevunuz yarın saat 10:00'\''da.",
+    "priority": "normal",
+    "scheduled_at": "2026-05-17T10:00:00Z"
+  }'
+```
+
+**Toplu bildirim (`batch`):**
+```bash
+curl -X POST http://localhost:8080/api/v1/notifications/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notifications": [
+      {
+        "recipient": "+905551234567",
+        "channel": "sms",
+        "content": "Kampanya başladı!",
+        "priority": "low"
+      },
+      {
+        "recipient": "+905557654321",
+        "channel": "sms",
+        "content": "Kampanya başladı!",
+        "priority": "low"
+      }
+    ]
+  }'
+```
+
+Batch yanıtı bir `batch_id` döner; durumu sorgulamak için:
+```bash
+curl http://localhost:8080/api/v1/batches/<batch_id>
 ```
 
 ## Testler
