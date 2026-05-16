@@ -4,16 +4,18 @@ import (
 	"context"
 	"study-case/internal/queue"
 
+	"github.com/rs/zerolog"
 	domain "study-case/internal/domain/notification"
 )
 
 type notificationService struct {
 	repo  domain.Repository
 	queue queue.Queue
+	log   zerolog.Logger
 }
 
-func NewNotificationService(repo domain.Repository, queue queue.Queue) Service {
-	return &notificationService{repo: repo, queue: queue}
+func NewNotificationService(repo domain.Repository, queue queue.Queue, log zerolog.Logger) Service {
+	return &notificationService{repo: repo, queue: queue, log: log}
 }
 
 func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*domain.Notification, error) {
@@ -42,6 +44,7 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 		return nil, err
 	}
 
+	s.log.Info().Str("id", notification.ID).Str("channel", string(notification.Channel)).Msg("notification created")
 	return notification, nil
 }
 
@@ -65,6 +68,7 @@ func (s *notificationService) CreateBatch(ctx context.Context, req CreateBatchRe
 		_ = s.queue.Enqueue(ctx, notification)
 	}
 
+	s.log.Info().Str("batch_id", newBatch.ID).Int("count", len(list)).Msg("batch created")
 	return &BatchResult{
 		BatchID: newBatch.ID,
 		Count:   len(list),
