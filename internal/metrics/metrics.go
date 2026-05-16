@@ -27,8 +27,24 @@ var (
 		},
 		[]string{"channel"},
 	)
+
+	NotificationsSent = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "notifications_sent_total",
+			Help: "Total notifications successfully sent",
+		},
+		[]string{"channel"},
+	)
+
+	NotificationsFailed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "notifications_failed_total",
+			Help: "Total notifications moved to dead letter queue",
+		},
+		[]string{"channel"},
+	)
 )
 
 func init() {
-	prometheus.MustRegister(NotificationsCreated, HTTPRequestDuration, QueueDepth)
+	prometheus.MustRegister(NotificationsCreated, HTTPRequestDuration, QueueDepth, NotificationsSent, NotificationsFailed)
 }

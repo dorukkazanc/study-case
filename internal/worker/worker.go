@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	domain "study-case/internal/domain/notification"
+	"study-case/internal/metrics"
 	"study-case/internal/queue"
 	"sync"
 	"time"
@@ -113,6 +114,7 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, n.Status)
 	}
 
+	metrics.NotificationsSent.WithLabelValues(string(n.Channel)).Inc()
 	w.log.Info().Str("id", n.ID).Str("provider_id", id).Msg("notification sent")
 }
 
@@ -126,6 +128,7 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 			return
 		}
 		n.MarkFailed("retry limit reached")
+		metrics.NotificationsFailed.WithLabelValues(string(n.Channel)).Inc()
 		w.log.Warn().Str("id", n.ID).Int("retry_count", n.RetryCount).Msg("notification moved to dead letter queue")
 
 		if n.BatchID != nil {
