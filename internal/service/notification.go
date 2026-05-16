@@ -52,11 +52,19 @@ func (s *notificationService) CreateBatch(ctx context.Context, req CreateBatchRe
 		notification.BatchID = &newBatch.ID
 	}
 
-	err := s.repo.CreateBatch(ctx, list, newBatch)
-
-	if err != nil {
+	if err := s.repo.CreateBatch(ctx, list, newBatch); err != nil {
 		return nil, err
 	}
+
+	if err := s.repo.UpdateStatusBatch(ctx, newBatch.ID, domain.StatusQueued); err != nil {
+		return nil, err
+	}
+
+	for _, notification := range list {
+		notification.MarkQueued()
+		_ = s.queue.Enqueue(ctx, notification)
+	}
+
 	return &BatchResult{
 		BatchID: newBatch.ID,
 		Count:   len(list),
