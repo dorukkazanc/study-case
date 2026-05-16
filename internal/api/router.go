@@ -1,11 +1,14 @@
 package api
 
 import (
+	_ "study-case/docs"
 	"study-case/internal/api/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"study-case/internal/api/handler"
 	"study-case/internal/service"
@@ -36,6 +39,7 @@ func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.En
 	}
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
