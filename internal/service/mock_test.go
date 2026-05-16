@@ -21,8 +21,7 @@ type mockRepository struct {
 }
 
 func (m *mockRepository) UpdateStatusBatch(ctx context.Context, id string, status notification.Status) error {
-	//TODO implement me
-	panic("implement me")
+	return m.UpdateStatusFn(ctx, id, status)
 }
 
 func (m *mockRepository) Create(ctx context.Context, n *domain.Notification) error {
