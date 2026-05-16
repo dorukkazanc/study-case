@@ -18,6 +18,17 @@ func NewNotificationService(repo domain.Repository, queue queue.Queue) Service {
 
 func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*domain.Notification, error) {
 	notification := domain.NewNotification(req.Recipient, req.Channel, req.Content, req.Priority)
+	if req.IdempotencyKey != nil {
+		exists, err := s.repo.ExistsByIdempotencyKey(ctx, *req.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, domain.ErrDuplicateIdempotencyKey
+		}
+	}
+	notification.IdempotencyKey = req.IdempotencyKey
+
 	if err := s.repo.Create(ctx, notification); err != nil {
 		return nil, err
 	}

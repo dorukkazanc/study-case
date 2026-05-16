@@ -190,3 +190,24 @@ func TestGetBatch_NotFound(t *testing.T) {
 	_, err := s.GetBatch(ctx, uuid.NewString())
 	assert.ErrorIs(t, err, domain.ErrBatchNotFound)
 }
+
+func TestCreate_DuplicateIdempotencyKey(t *testing.T) {
+	repo := &mockRepository{
+		ExistsByIdempotencyKeyFn: func(ctx context.Context, key string) (bool, error) {
+			return true, nil
+		},
+	}
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
+	ctx := context.Background()
+	_, err := s.Create(ctx, service.CreateRequest{
+		Recipient:      "+9011111111",
+		Channel:        domain.ChannelSMS,
+		Content:        "test",
+		Priority:       domain.PriorityNormal,
+		IdempotencyKey: new("testkey"),
+	})
+	require.ErrorIs(t, err, domain.ErrDuplicateIdempotencyKey)
+
+}
