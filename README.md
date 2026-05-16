@@ -8,6 +8,12 @@ SMS, Email ve Push kanalları üzerinden bildirim gönderen asenkron bir servis.
 docker compose up --build
 ```
 
+Kendi webhook URL'i kullanmak istersen:
+
+```bash
+PROVIDER_WEBHOOK_URL=https://... docker compose up --build
+```
+
 ## API
 
 | Method | Endpoint | Açıklama |
