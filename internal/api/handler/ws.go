@@ -35,7 +35,14 @@ func (h *WSHandler) NotificationStatus(c *gin.Context) {
 	}(conn)
 
 	ch := h.hub.Subscribe(id)
-	defer h.hub.Unsubscribe(id, ch)
+	go func() {
+		defer h.hub.Unsubscribe(id, ch)
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
 
 	for update := range ch {
 		if err := conn.WriteJSON(update); err != nil {
