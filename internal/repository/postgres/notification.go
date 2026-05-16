@@ -3,11 +3,10 @@ package postgres
 import (
 	"context"
 	"errors"
+	"study-case/internal/domain/notification"
 	"time"
 
 	"gorm.io/gorm"
-
-	"study-case/internal/domain/notification"
 )
 
 type NotificationRepository struct {
@@ -30,7 +29,12 @@ func (r *NotificationRepository) Create(ctx context.Context, n *notification.Not
 }
 
 func (r *NotificationRepository) CreateBatch(ctx context.Context, notifications []*notification.Notification, batch *notification.Batch) error {
-	panic("not implemented")
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(batch).Error; err != nil {
+			return err
+		}
+		return tx.Create(&notifications).Error
+	})
 }
 
 func (r *NotificationRepository) GetByID(ctx context.Context, id string) (*notification.Notification, error) {
