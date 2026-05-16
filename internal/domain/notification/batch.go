@@ -24,7 +24,7 @@ func NewBatch(total int) *Batch {
 	return &Batch{
 		ID:        uuid.NewString(),
 		Total:     total,
-		Pending:   total,
+		Queued:    total,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
