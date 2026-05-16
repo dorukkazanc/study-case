@@ -18,10 +18,11 @@ type mockRepository struct {
 	GetBatchFn               func(ctx context.Context, batchID string) (*domain.Batch, error)
 	UpdateBatchCountersFn    func(ctx context.Context, batchID string, from, to domain.Status) error
 	ExistsByIdempotencyKeyFn func(ctx context.Context, key string) (bool, error)
+	UpdateStatusBatchFn      func(ctx context.Context, batchID string, status domain.Status) error
 }
 
 func (m *mockRepository) UpdateStatusBatch(ctx context.Context, id string, status notification.Status) error {
-	return m.UpdateStatusFn(ctx, id, status)
+	return m.UpdateStatusBatchFn(ctx, id, status)
 }
 
 func (m *mockRepository) Create(ctx context.Context, n *domain.Notification) error {

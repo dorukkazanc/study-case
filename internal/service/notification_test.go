@@ -216,6 +216,9 @@ func TestCreateBatch_Success(t *testing.T) {
 		CreateBatchFn: func(ctx context.Context, notifications []*domain.Notification, batch *domain.Batch) error {
 			return nil
 		},
+		UpdateStatusBatchFn: func(ctx context.Context, batchID string, status domain.Status) error {
+			return nil
+		},
 	}
 	queue := &mockQueue{}
 
