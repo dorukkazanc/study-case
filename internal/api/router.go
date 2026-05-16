@@ -1,15 +1,19 @@
 package api
 
 import (
+	"study-case/internal/api/middleware"
+
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 
 	"study-case/internal/api/handler"
 	"study-case/internal/service"
 )
 
-func NewNotificationRouter(notifSvc service.Service) *gin.Engine {
+func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.Correlation(log))
 
 	r.GET("/health", handler.Health)
 

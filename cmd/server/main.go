@@ -11,6 +11,7 @@ import (
 	queue3 "study-case/internal/queue"
 	"study-case/internal/queue/redis"
 	"study-case/internal/worker"
+	"study-case/pkg/logger"
 	"syscall"
 	"time"
 
@@ -40,11 +41,12 @@ func main() {
 		DB:       cfg.Redis.DB,
 	})
 
+	zeroLogger := logger.NewLogger(cfg.Log.Level)
 	repo := pgrepo.NewNotificationRepository(db)
 	pq := redis.NewPriorityQueue(rds)
 	queue := queue3.Queue(pq)
 	svc := service.NewNotificationService(repo, queue)
-	router := api.NewNotificationRouter(svc)
+	router := api.NewNotificationRouter(svc, zeroLogger)
 	promoter := redis.NewPromoter(rds, pq, time.Minute)
 	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
 
@@ -68,9 +70,9 @@ func main() {
 	go w.Run(ctx)
 
 	go func() {
-		log.Printf("server started on :%s", cfg.Server.Port)
+		zeroLogger.Printf("server started on :%s", cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
+			zeroLogger.Fatal().Err(err).Msg("server error")
 		}
 	}()
 
@@ -80,9 +82,9 @@ func main() {
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("shutdown error: %v", err)
+		zeroLogger.Printf("shutdown error: %v", err)
 	}
-	log.Println("server stopped")
+	zeroLogger.Info().Msg("server stopped")
 }
 
 func mustConnectDB(cfg *config.Config) *gorm.DB {
