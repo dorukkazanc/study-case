@@ -42,6 +42,7 @@ func main() {
 	})
 
 	zeroLogger := logger.NewLogger(cfg.Log.Level)
+
 	repo := pgrepo.NewNotificationRepository(db)
 	pq := redis.NewPriorityQueue(rds)
 	queue := queue3.Queue(pq)
@@ -70,7 +71,7 @@ func main() {
 	go w.Run(ctx)
 
 	go func() {
-		zeroLogger.Printf("server started on :%s", cfg.Server.Port)
+		zeroLogger.Info().Msgf("server started on :%s", cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			zeroLogger.Fatal().Err(err).Msg("server error")
 		}
@@ -82,7 +83,7 @@ func main() {
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		zeroLogger.Printf("shutdown error: %v", err)
+		zeroLogger.Error().Err(err).Msg("shutdown error")
 	}
 	zeroLogger.Info().Msg("server stopped")
 }
