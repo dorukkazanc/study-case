@@ -6,12 +6,15 @@ import (
 	"study-case/internal/queue"
 	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 type Config struct {
 	Concurrency  int
 	MaxRetries   int
 	PollInterval time.Duration
+	RateLimitRPS int
 }
 
 type Worker struct {
@@ -19,14 +22,25 @@ type Worker struct {
 	queue    queue.Queue
 	repo     Repository
 	provider Provider
+	limiters map[domain.Channel]*rate.Limiter
 }
 
-func NewWorker(cfg Config, queue queue.Queue, repo Repository, provider Provider) *Worker {
+func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider) *Worker {
+	channels := []domain.Channel{domain.ChannelSMS, domain.ChannelEmail, domain.ChannelPush}
+	limiters := make(map[domain.Channel]*rate.Limiter, len(channels))
+	rps := cfg.RateLimitRPS
+	if rps <= 0 {
+		rps = 100
+	}
+	for _, ch := range channels {
+		limiters[ch] = rate.NewLimiter(rate.Limit(rps), rps)
+	}
 	return &Worker{
 		cfg:      cfg,
-		queue:    queue,
+		queue:    q,
 		repo:     repo,
 		provider: provider,
+		limiters: limiters,
 	}
 }
 
@@ -64,6 +78,9 @@ func (w *Worker) runLoop(ctx context.Context, channel domain.Channel) {
 			continue
 		}
 
+		if err := w.limiters[n.Channel].Wait(ctx); err != nil {
+			return
+		}
 		w.Process(ctx, n)
 	}
 }
