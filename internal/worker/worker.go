@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/time/rate"
 )
 
@@ -23,9 +24,10 @@ type Worker struct {
 	repo     Repository
 	provider Provider
 	limiters map[domain.Channel]*rate.Limiter
+	log      zerolog.Logger
 }
 
-func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider) *Worker {
+func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider, log zerolog.Logger) *Worker {
 	channels := []domain.Channel{domain.ChannelSMS, domain.ChannelEmail, domain.ChannelPush}
 	limiters := make(map[domain.Channel]*rate.Limiter, len(channels))
 	rps := cfg.RateLimitRPS
@@ -41,6 +43,7 @@ func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider) *W
 		repo:     repo,
 		provider: provider,
 		limiters: limiters,
+		log:      log,
 	}
 }
 
@@ -96,6 +99,7 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 
 	id, err := w.provider.Send(ctx, n)
 	if err != nil {
+		w.log.Error().Err(err).Str("id", n.ID).Msg("provider send failed")
 		w.handleFailure(ctx, n, err)
 		return
 	}
@@ -108,6 +112,8 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 	if n.BatchID != nil {
 		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, n.Status)
 	}
+
+	w.log.Info().Str("id", n.ID).Str("provider_id", id).Msg("notification sent")
 }
 
 func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err error) {
@@ -120,6 +126,7 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 			return
 		}
 		n.MarkFailed("retry limit reached")
+		w.log.Warn().Str("id", n.ID).Int("retry_count", n.RetryCount).Msg("notification moved to dead letter queue")
 
 		if n.BatchID != nil {
 			_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, n.Status)
@@ -131,6 +138,7 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 	}
 	n.MarkQueued()
 	delay := 5 * time.Second * (1 << n.RetryCount)
+	w.log.Warn().Str("id", n.ID).Int("retry_count", n.RetryCount).Dur("delay", delay).Msg("notification scheduled for retry")
 	if err := w.queue.EnqueueDelayed(ctx, n, delay); err != nil {
 		return
 	}
