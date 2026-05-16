@@ -52,6 +52,7 @@ func main() {
 		Concurrency:  3,
 		MaxRetries:   3,
 		PollInterval: 500 * time.Millisecond,
+		RateLimitRPS: cfg.Provider.RateLimitRPS,
 	}, pq, repo, provider)
 
 	srv := &http.Server{
