@@ -3,6 +3,7 @@ package worker_test
 import (
 	"context"
 	"fmt"
+	"study-case/internal/hub"
 	"testing"
 	"time"
 
@@ -13,8 +14,8 @@ import (
 	"study-case/internal/worker"
 )
 
-func newWorker(cfg worker.Config, repo *mockRepository, provider *mockProvider, q *mockQueue) *worker.Worker {
-	return worker.NewWorker(cfg, q, repo, provider, zerolog.Nop())
+func newWorker(cfg worker.Config, repo *mockRepository, provider *mockProvider, q *mockQueue, hub *hub.Hub) *worker.Worker {
+	return worker.NewWorker(cfg, q, repo, provider, zerolog.Nop(), hub)
 }
 
 func TestProcess_Success(t *testing.T) {
@@ -36,7 +37,7 @@ func TestProcess_Success(t *testing.T) {
 		Concurrency:  3,
 		MaxRetries:   3,
 		PollInterval: time.Second * 5,
-	}, repo, provider, &mockQueue{})
+	}, repo, provider, &mockQueue{}, hub.NewHub())
 	w.Process(ctx, n)
 
 	assert.Equal(t, domain.StatusSent, n.Status)
@@ -62,7 +63,7 @@ func TestProcess_Failure(t *testing.T) {
 		Concurrency:  1,
 		MaxRetries:   2,
 		PollInterval: time.Second * 5,
-	}, repo, provider, &mockQueue{})
+	}, repo, provider, &mockQueue{}, hub.NewHub())
 
 	w.Process(ctx, n)
 
@@ -89,7 +90,7 @@ func TestProcess_DeadLetter(t *testing.T) {
 		Concurrency:  1,
 		MaxRetries:   2,
 		PollInterval: time.Second * 5,
-	}, repo, provider, &mockQueue{})
+	}, repo, provider, &mockQueue{}, hub.NewHub())
 
 	w.Process(ctx, n)
 
