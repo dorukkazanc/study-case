@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	domain "study-case/internal/domain/notification"
+	"study-case/internal/hub"
 	"study-case/internal/metrics"
 	"study-case/internal/queue"
 	"sync"
@@ -26,9 +27,10 @@ type Worker struct {
 	provider Provider
 	limiters map[domain.Channel]*rate.Limiter
 	log      zerolog.Logger
+	hub      *hub.Hub
 }
 
-func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider, log zerolog.Logger) *Worker {
+func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider, log zerolog.Logger, h *hub.Hub) *Worker {
 	channels := []domain.Channel{domain.ChannelSMS, domain.ChannelEmail, domain.ChannelPush}
 	limiters := make(map[domain.Channel]*rate.Limiter, len(channels))
 	rps := cfg.RateLimitRPS
@@ -45,6 +47,7 @@ func NewWorker(cfg Config, q queue.Queue, repo Repository, provider Provider, lo
 		provider: provider,
 		limiters: limiters,
 		log:      log,
+		hub:      h,
 	}
 }
 
@@ -115,6 +118,7 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 	}
 
 	metrics.NotificationsSent.WithLabelValues(string(n.Channel)).Inc()
+	w.hub.Publish(n.ID, n.Status)
 	w.log.Info().Str("id", n.ID).Str("provider_id", id).Msg("notification sent")
 }
 
@@ -129,6 +133,7 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 		}
 		n.MarkFailed("retry limit reached")
 		metrics.NotificationsFailed.WithLabelValues(string(n.Channel)).Inc()
+		w.hub.Publish(n.ID, n.Status)
 		w.log.Warn().Str("id", n.ID).Int("retry_count", n.RetryCount).Msg("notification moved to dead letter queue")
 
 		if n.BatchID != nil {
@@ -141,6 +146,7 @@ func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err 
 	}
 	n.RetryCount++
 	n.MarkQueued()
+	w.hub.Publish(n.ID, n.Status)
 
 	if n.BatchID != nil {
 		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, domain.StatusQueued)

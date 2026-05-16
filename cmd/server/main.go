@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	hub2 "study-case/internal/hub"
 	"study-case/internal/provider/webhook"
 	queue3 "study-case/internal/queue"
 	"study-case/internal/queue/redis"
@@ -57,13 +58,14 @@ func main() {
 	promoter := redis.NewPromoter(rds, pq, time.Minute)
 	collector := redis.NewMetricsCollector(pq, 15*time.Second)
 	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
+	hub := hub2.NewHub()
 
 	w := worker.NewWorker(worker.Config{
 		Concurrency:  3,
 		MaxRetries:   3,
 		PollInterval: 500 * time.Millisecond,
 		RateLimitRPS: cfg.Provider.RateLimitRPS,
-	}, pq, repo, provider, zeroLogger)
+	}, pq, repo, provider, zeroLogger, hub)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
