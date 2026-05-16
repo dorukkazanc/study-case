@@ -209,5 +209,27 @@ func TestCreate_DuplicateIdempotencyKey(t *testing.T) {
 		IdempotencyKey: new("testkey"),
 	})
 	require.ErrorIs(t, err, domain.ErrDuplicateIdempotencyKey)
+}
 
+func TestCreateBatch_Success(t *testing.T) {
+	repo := &mockRepository{
+		CreateBatchFn: func(ctx context.Context, notifications []*domain.Notification, batch *domain.Batch) error {
+			return nil
+		},
+	}
+	queue := &mockQueue{}
+
+	s := newService(repo, queue)
+	ctx := context.Background()
+
+	result, err := s.CreateBatch(ctx, service.CreateBatchRequest{
+		Notifications: []service.CreateRequest{
+			{Recipient: "1", Channel: domain.ChannelSMS, Content: "mock1", Priority: domain.PriorityNormal},
+			{Recipient: "2", Channel: domain.ChannelSMS, Content: "mock2", Priority: domain.PriorityNormal},
+		},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 2, result.Count)
+	assert.NotEmpty(t, result.BatchID)
 }
