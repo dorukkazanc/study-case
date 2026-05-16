@@ -1,3 +1,9 @@
+// @title           Notification Service API
+// @version         1.0
+// @description     Scalable notification delivery service for SMS, Email, and Push channels with priority queuing, retry logic, and observability.
+// @host            localhost:8080
+// @BasePath        /api/v1
+
 package main
 
 import (

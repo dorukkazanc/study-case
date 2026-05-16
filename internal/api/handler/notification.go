@@ -18,17 +18,17 @@ func NewNotificationHandler(svc service.Service) *NotificationHandler {
 	return &NotificationHandler{svc: svc}
 }
 
-type createRequest struct {
+type CreateRequest struct {
 	Recipient      string  `json:"recipient"        binding:"required"`
-	Channel        string  `json:"channel"          binding:"required,oneof=sms email push"`
-	Content        string  `json:"content"          binding:"required,max=1600"`
-	Priority       string  `json:"priority"         binding:"omitempty,oneof=high normal low"`
+	Channel        string  `json:"channel"          binding:"required,oneof=sms email push"  example:"sms"`
+	Content        string  `json:"content"          binding:"required,max=1600"              example:"Your verification code is 123456"`
+	Priority       string  `json:"priority"         binding:"omitempty,oneof=high normal low" example:"normal"`
 	IdempotencyKey *string `json:"idempotency_key"`
-	ScheduledAt    *string `json:"scheduled_at"`
+	ScheduledAt    *string `json:"scheduled_at"     example:"2026-01-01T12:00:00Z"`
 }
 
-type createBatchRequest struct {
-	Notifications []createRequest `json:"notifications" binding:"required,min=1,max=1000"`
+type CreateBatchRequest struct {
+	Notifications []CreateRequest `json:"notifications" binding:"required,min=1,max=1000"`
 }
 
 type listQuery struct {
@@ -41,8 +41,19 @@ type listQuery struct {
 	EndDate   string `form:"end_date"`
 }
 
+// Create godoc
+// @Summary      Create a notification
+// @Tags         notifications
+// @Accept       json
+// @Produce      json
+// @Param        request  body      CreateRequest        true  "Notification payload"
+// @Success      201      {object}  NotificationResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      409      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /notifications [post]
 func (h *NotificationHandler) Create(c *gin.Context) {
-	var req createRequest
+	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -79,8 +90,18 @@ func (h *NotificationHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, toNotificationResponse(n))
 }
 
+// CreateBatch godoc
+// @Summary      Create a batch of notifications
+// @Tags         notifications
+// @Accept       json
+// @Produce      json
+// @Param        request  body      CreateBatchRequest   true  "Batch payload (max 1000)"
+// @Success      201      {object}  CreateBatchResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /notifications/batch [post]
 func (h *NotificationHandler) CreateBatch(c *gin.Context) {
-	var req createBatchRequest
+	var req CreateBatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -109,12 +130,20 @@ func (h *NotificationHandler) CreateBatch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, createBatchResponse{
+	c.JSON(http.StatusCreated, CreateBatchResponse{
 		BatchID: result.BatchID,
 		Count:   result.Count,
 	})
 }
 
+// GetByID godoc
+// @Summary      Get notification by ID
+// @Tags         notifications
+// @Produce      json
+// @Param        id   path      string  true  "Notification ID"
+// @Success      200  {object}  NotificationResponse
+// @Failure      404  {object}  ErrorResponse
+// @Router       /notifications/{id} [get]
 func (h *NotificationHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -127,6 +156,20 @@ func (h *NotificationHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, toNotificationResponse(n))
 }
 
+// List godoc
+// @Summary      List notifications
+// @Tags         notifications
+// @Produce      json
+// @Param        status      query     string  false  "Filter by status (pending,queued,processing,sent,failed,cancelled)"
+// @Param        channel     query     string  false  "Filter by channel (sms,email,push)"
+// @Param        batch_id    query     string  false  "Filter by batch ID"
+// @Param        start_date  query     string  false  "Filter from date (RFC3339)"
+// @Param        end_date    query     string  false  "Filter to date (RFC3339)"
+// @Param        page        query     int     false  "Page number (default 1)"
+// @Param        page_size   query     int     false  "Page size (default 20)"
+// @Success      200  {object}  ListResponse
+// @Failure      400  {object}  ErrorResponse
+// @Router       /notifications [get]
 func (h *NotificationHandler) List(c *gin.Context) {
 	var q listQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -172,12 +215,12 @@ func (h *NotificationHandler) List(c *gin.Context) {
 		return
 	}
 
-	resp := make([]*notificationResponse, 0, len(notifications))
+	resp := make([]*NotificationResponse, 0, len(notifications))
 	for _, n := range notifications {
 		resp = append(resp, toNotificationResponse(n))
 	}
 
-	c.JSON(http.StatusOK, listResponse{
+	c.JSON(http.StatusOK, ListResponse{
 		Notifications: resp,
 		Total:         total,
 		Page:          q.Page,
@@ -185,6 +228,14 @@ func (h *NotificationHandler) List(c *gin.Context) {
 	})
 }
 
+// Cancel godoc
+// @Summary      Cancel a pending notification
+// @Tags         notifications
+// @Param        id   path  string  true  "Notification ID"
+// @Success      204
+// @Failure      404  {object}  ErrorResponse
+// @Failure      409  {object}  ErrorResponse
+// @Router       /notifications/{id} [delete]
 func (h *NotificationHandler) Cancel(c *gin.Context) {
 	id := c.Param("id")
 
@@ -196,6 +247,14 @@ func (h *NotificationHandler) Cancel(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// GetBatch godoc
+// @Summary      Get batch statistics
+// @Tags         batches
+// @Produce      json
+// @Param        batchID  path      string  true  "Batch ID"
+// @Success      200      {object}  BatchResponse
+// @Failure      404      {object}  ErrorResponse
+// @Router       /batches/{batchID} [get]
 func (h *NotificationHandler) GetBatch(c *gin.Context) {
 	batchID := c.Param("batchID")
 

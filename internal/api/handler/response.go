@@ -10,7 +10,7 @@ import (
 	domain "study-case/internal/domain/notification"
 )
 
-type notificationResponse struct {
+type NotificationResponse struct {
 	ID             string     `json:"id"`
 	BatchID        *string    `json:"batch_id,omitempty"`
 	Recipient      string     `json:"recipient"`
@@ -29,7 +29,7 @@ type notificationResponse struct {
 	ErrorMessage   *string    `json:"error_message,omitempty"`
 }
 
-type batchResponse struct {
+type BatchResponse struct {
 	ID         string    `json:"id"`
 	Total      int       `json:"total"`
 	Pending    int       `json:"pending"`
@@ -42,20 +42,24 @@ type batchResponse struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-type listResponse struct {
-	Notifications []*notificationResponse `json:"notifications"`
+type ListResponse struct {
+	Notifications []*NotificationResponse `json:"notifications"`
 	Total         int                     `json:"total"`
 	Page          int                     `json:"page"`
 	PageSize      int                     `json:"page_size"`
 }
 
-type createBatchResponse struct {
+type CreateBatchResponse struct {
 	BatchID string `json:"batch_id"`
 	Count   int    `json:"count"`
 }
 
-func toNotificationResponse(n *domain.Notification) *notificationResponse {
-	return &notificationResponse{
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func toNotificationResponse(n *domain.Notification) *NotificationResponse {
+	return &NotificationResponse{
 		ID:             n.ID,
 		BatchID:        n.BatchID,
 		Recipient:      n.Recipient,
@@ -75,8 +79,8 @@ func toNotificationResponse(n *domain.Notification) *notificationResponse {
 	}
 }
 
-func toBatchResponse(b *domain.Batch) *batchResponse {
-	return &batchResponse{
+func toBatchResponse(b *domain.Batch) *BatchResponse {
+	return &BatchResponse{
 		ID:         b.ID,
 		Total:      b.Total,
 		Pending:    b.Pending,
