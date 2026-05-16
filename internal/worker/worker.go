@@ -86,5 +86,23 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 }
 
 func (w *Worker) handleFailure(ctx context.Context, notification *domain.Notification, err error) {
+	if notification.RetryCount >= w.cfg.MaxRetries {
+		e := w.queue.MoveToDead(ctx, notification)
+		if e != nil {
+			return
+		}
+		if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusFailed); err != nil {
+			return
+		}
+		return
+	}
+	notification.MarkFailed(err.Error())
+	if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusQueued, domain.WithErrorMessage(err.Error())); err != nil {
+		return
+	}
+	delay := 5 * time.Second * (1 << notification.RetryCount)
+	if err := w.queue.EnqueueDelayed(ctx, notification, delay); err != nil {
+		return
+	}
 
 }
