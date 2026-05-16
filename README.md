@@ -21,6 +21,7 @@ docker compose up --build
 | GET | `/health` | Health check |
 | GET | `/metrics` | Prometheus metrikleri |
 | GET | `/swagger/index.html` | API dokümantasyonu |
+| GET | `/ws/notifications/:id` | WebSocket — real-time status güncellemeleri |
 
 ### Örnek İstek
 
@@ -30,8 +31,12 @@ curl -X POST http://localhost:8080/api/v1/notifications \
   -d '{
     "recipient": "+905551234567",
     "channel": "sms",
-    "content": "Doğrulama kodunuz: 123456",
-    "priority": "high"
+    "content": "Merhaba {{name}}, kodunuz: {{code}}",
+    "priority": "high",
+    "variables": {
+      "name": "Ahmet",
+      "code": "123456"
+    }
   }'
 ```
 

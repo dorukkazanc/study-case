@@ -51,7 +51,7 @@ definitions:
         example: sms
         type: string
       content:
-        example: Your verification code is 123456
+        example: Hello {{name}}, your code is {{code}}
         maxLength: 1600
         type: string
       idempotency_key:
@@ -68,6 +68,10 @@ definitions:
       scheduled_at:
         example: "2026-01-01T12:00:00Z"
         type: string
+      variables:
+        additionalProperties:
+          type: string
+        type: object
     required:
     - channel
     - content

@@ -384,7 +384,7 @@ const docTemplate = `{
                 "content": {
                     "type": "string",
                     "maxLength": 1600,
-                    "example": "Your verification code is 123456"
+                    "example": "Hello {{name}}, your code is {{code}}"
                 },
                 "idempotency_key": {
                     "type": "string"
@@ -404,6 +404,12 @@ const docTemplate = `{
                 "scheduled_at": {
                     "type": "string",
                     "example": "2026-01-01T12:00:00Z"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },
