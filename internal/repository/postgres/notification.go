@@ -120,11 +120,46 @@ func (r *NotificationRepository) Cancel(ctx context.Context, id string) error {
 }
 
 func (r *NotificationRepository) GetBatch(ctx context.Context, batchID string) (*notification.Batch, error) {
-	panic("not implemented")
+	var b notification.Batch
+	err := r.db.WithContext(ctx).First(&b, "id = ?", batchID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, notification.ErrBatchNotFound
+	}
+	return &b, err
 }
 
 func (r *NotificationRepository) UpdateBatchCounters(ctx context.Context, batchID string, from, to notification.Status) error {
-	panic("not implemented")
+	fromCol := statusColumn(from)
+	toCol := statusColumn(to)
+	if fromCol == "" || toCol == "" {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Model(&notification.Batch{}).
+		Where("id = ?", batchID).
+		Updates(map[string]any{
+			fromCol: gorm.Expr(fromCol + " - 1"),
+			toCol:   gorm.Expr(toCol + " + 1"),
+		}).Error
+}
+
+func statusColumn(s notification.Status) string {
+	switch s {
+	case notification.StatusPending:
+		return "pending"
+	case notification.StatusQueued:
+		return "queued"
+	case notification.StatusProcessing:
+		return "processing"
+	case notification.StatusSent:
+		return "sent"
+	case notification.StatusFailed:
+		return "failed"
+	case notification.StatusCancelled:
+		return "cancelled"
+	default:
+		return ""
+	}
 }
 
 func (r *NotificationRepository) ExistsByIdempotencyKey(ctx context.Context, key string) (bool, error) {
