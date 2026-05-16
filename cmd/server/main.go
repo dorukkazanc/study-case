@@ -46,7 +46,7 @@ func main() {
 	repo := pgrepo.NewNotificationRepository(db)
 	pq := redis.NewPriorityQueue(rds)
 	queue := queue3.Queue(pq)
-	svc := service.NewNotificationService(repo, queue)
+	svc := service.NewNotificationService(repo, queue, zeroLogger)
 	router := api.NewNotificationRouter(svc, zeroLogger)
 	promoter := redis.NewPromoter(rds, pq, time.Minute)
 	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
@@ -56,7 +56,7 @@ func main() {
 		MaxRetries:   3,
 		PollInterval: 500 * time.Millisecond,
 		RateLimitRPS: cfg.Provider.RateLimitRPS,
-	}, pq, repo, provider)
+	}, pq, repo, provider, zeroLogger)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
