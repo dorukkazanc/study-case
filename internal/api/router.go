@@ -11,10 +11,11 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"study-case/internal/api/handler"
+	"study-case/internal/hub"
 	"study-case/internal/service"
 )
 
-func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.Engine {
+func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger, h *hub.Hub) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Correlation(log))
@@ -23,6 +24,7 @@ func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.En
 	r.GET("/health", handler.Health)
 
 	n := handler.NewNotificationHandler(notifSvc)
+	ws := handler.NewWSHandler(h)
 
 	v1 := r.Group("/api/v1")
 	{
@@ -37,6 +39,8 @@ func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.En
 
 		v1.GET("/batches/:batchID", n.GetBatch)
 	}
+
+	r.GET("/ws/notifications/:id", ws.NotificationStatus)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

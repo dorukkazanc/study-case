@@ -54,11 +54,11 @@ func main() {
 	pq := redis.NewPriorityQueue(rds)
 	queue := queue3.Queue(pq)
 	svc := service.NewNotificationService(repo, queue, zeroLogger)
-	router := api.NewNotificationRouter(svc, zeroLogger)
+	hub := hub2.NewHub()
+	router := api.NewNotificationRouter(svc, zeroLogger, hub)
 	promoter := redis.NewPromoter(rds, pq, time.Minute)
 	collector := redis.NewMetricsCollector(pq, 15*time.Second)
 	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
-	hub := hub2.NewHub()
 
 	w := worker.NewWorker(worker.Config{
 		Concurrency:  3,
