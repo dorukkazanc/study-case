@@ -117,5 +117,10 @@ func (r *NotificationRepository) UpdateBatchCounters(ctx context.Context, batchI
 }
 
 func (r *NotificationRepository) ExistsByIdempotencyKey(ctx context.Context, key string) (bool, error) {
-	panic("not implemented")
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&notification.Notification{}).
+		Where("idempotency_key = ?", key).
+		Count(&count).Error
+	return count > 0, err
 }
