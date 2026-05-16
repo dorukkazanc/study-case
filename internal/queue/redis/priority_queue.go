@@ -80,6 +80,10 @@ func (q *PriorityQueue) MoveToDead(ctx context.Context, n *domain.Notification) 
 	return q.client.LPush(ctx, keyDead, string(data)).Err()
 }
 
-func (q *PriorityQueue) Depth(ctx context.Context, channel domain.Channel) (*domain.Notification, error) {
-	return nil, fmt.Errorf("not implemented")
+func (q *PriorityQueue) Depth(ctx context.Context, channel domain.Channel) (int64, error) {
+	count, err := q.client.ZCard(ctx, channelKey(channel)).Result()
+	if err != nil {
+		return 0, fmt.Errorf("depth: %w", err)
+	}
+	return count, nil
 }

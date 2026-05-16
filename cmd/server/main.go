@@ -49,6 +49,7 @@ func main() {
 	svc := service.NewNotificationService(repo, queue, zeroLogger)
 	router := api.NewNotificationRouter(svc, zeroLogger)
 	promoter := redis.NewPromoter(rds, pq, time.Minute)
+	collector := redis.NewMetricsCollector(pq, 15*time.Second)
 	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
 
 	w := worker.NewWorker(worker.Config{
@@ -68,6 +69,7 @@ func main() {
 	defer cancel()
 
 	go promoter.Start(ctx)
+	go collector.Start(ctx)
 	go w.Run(ctx)
 
 	go func() {
