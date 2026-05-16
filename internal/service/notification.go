@@ -46,7 +46,21 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 }
 
 func (s *notificationService) CreateBatch(ctx context.Context, req CreateBatchRequest) (*BatchResult, error) {
-	panic("not implemented")
+	list := createNotificationListFromBatchRequest(req)
+	newBatch := domain.NewBatch(len(list))
+	for _, notification := range list {
+		notification.BatchID = &newBatch.ID
+	}
+
+	err := s.repo.CreateBatch(ctx, list, newBatch)
+
+	if err != nil {
+		return nil, err
+	}
+	return &BatchResult{
+		BatchID: newBatch.ID,
+		Count:   len(list),
+	}, nil
 }
 
 func (s *notificationService) GetByID(ctx context.Context, id string) (*domain.Notification, error) {
@@ -63,4 +77,14 @@ func (s *notificationService) Cancel(ctx context.Context, id string) error {
 
 func (s *notificationService) GetBatch(ctx context.Context, batchID string) (*domain.Batch, error) {
 	return s.repo.GetBatch(ctx, batchID)
+}
+
+func createNotificationListFromBatchRequest(req CreateBatchRequest) []*domain.Notification {
+	notifications := make([]*domain.Notification, 0, len(req.Notifications))
+	for _, r := range req.Notifications {
+		n := domain.NewNotification(r.Recipient, r.Channel, r.Content, r.Priority)
+		n.IdempotencyKey = r.IdempotencyKey
+		notifications = append(notifications, n)
+	}
+	return notifications
 }
