@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"study-case/internal/metrics"
 	"study-case/internal/queue"
 
-	"github.com/rs/zerolog"
 	domain "study-case/internal/domain/notification"
+
+	"github.com/rs/zerolog"
 )
 
 type notificationService struct {
@@ -44,6 +46,10 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 		return nil, err
 	}
 
+	metrics.NotificationsCreated.WithLabelValues(
+		string(notification.Channel),
+		string(notification.Priority),
+	).Inc()
 	s.log.Info().Str("id", notification.ID).Str("channel", string(notification.Channel)).Msg("notification created")
 	return notification, nil
 }

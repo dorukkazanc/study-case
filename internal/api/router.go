@@ -15,6 +15,7 @@ func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.En
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Correlation(log))
+	r.Use(middleware.Metrics())
 
 	r.GET("/health", handler.Health)
 
