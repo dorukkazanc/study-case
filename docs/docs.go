@@ -384,7 +384,7 @@ const docTemplate = `{
                 "content": {
                     "type": "string",
                     "maxLength": 1600,
-                    "example": "Hello {name}, your code is {code}"
+                    "example": "Hello John, your code is 123456"
                 },
                 "idempotency_key": {
                     "type": "string"

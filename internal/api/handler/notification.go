@@ -21,7 +21,7 @@ func NewNotificationHandler(svc service.Service) *NotificationHandler {
 type CreateRequest struct {
 	Recipient      string            `json:"recipient"        binding:"required"`
 	Channel        string            `json:"channel"          binding:"required,oneof=sms email push"  example:"sms"`
-	Content        string            `json:"content"          binding:"required,max=1600"              example:"Hello {name}, your code is {code}"`
+	Content        string            `json:"content"          binding:"required,max=1600"              example:"Hello John, your code is 123456"`
 	Priority       string            `json:"priority"         binding:"omitempty,oneof=high normal low" example:"normal"`
 	IdempotencyKey *string           `json:"idempotency_key"`
 	ScheduledAt    *string           `json:"scheduled_at"     example:"2026-01-01T12:00:00Z"`
