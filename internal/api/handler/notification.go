@@ -51,7 +51,7 @@ type listQuery struct {
 // @Failure      400      {object}  ErrorResponse
 // @Failure      409      {object}  ErrorResponse
 // @Failure      500      {object}  ErrorResponse
-// @Router       /notifications [post]
+// @Router       /api/v1/notifications [post]
 func (h *NotificationHandler) Create(c *gin.Context) {
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -99,7 +99,7 @@ func (h *NotificationHandler) Create(c *gin.Context) {
 // @Success      201      {object}  CreateBatchResponse
 // @Failure      400      {object}  ErrorResponse
 // @Failure      500      {object}  ErrorResponse
-// @Router       /notifications/batch [post]
+// @Router       /api/v1/notifications/batch [post]
 func (h *NotificationHandler) CreateBatch(c *gin.Context) {
 	var req CreateBatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -143,7 +143,7 @@ func (h *NotificationHandler) CreateBatch(c *gin.Context) {
 // @Param        id   path      string  true  "Notification ID"
 // @Success      200  {object}  NotificationResponse
 // @Failure      404  {object}  ErrorResponse
-// @Router       /notifications/{id} [get]
+// @Router       /api/v1/notifications/{id} [get]
 func (h *NotificationHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -169,7 +169,7 @@ func (h *NotificationHandler) GetByID(c *gin.Context) {
 // @Param        page_size   query     int     false  "Page size (default 20)"
 // @Success      200  {object}  ListResponse
 // @Failure      400  {object}  ErrorResponse
-// @Router       /notifications [get]
+// @Router       /api/v1/notifications [get]
 func (h *NotificationHandler) List(c *gin.Context) {
 	var q listQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -235,7 +235,7 @@ func (h *NotificationHandler) List(c *gin.Context) {
 // @Success      204
 // @Failure      404  {object}  ErrorResponse
 // @Failure      409  {object}  ErrorResponse
-// @Router       /notifications/{id} [delete]
+// @Router       /api/v1/notifications/{id} [delete]
 func (h *NotificationHandler) Cancel(c *gin.Context) {
 	id := c.Param("id")
 
@@ -254,7 +254,7 @@ func (h *NotificationHandler) Cancel(c *gin.Context) {
 // @Param        batchID  path      string  true  "Batch ID"
 // @Success      200      {object}  BatchResponse
 // @Failure      404      {object}  ErrorResponse
-// @Router       /batches/{batchID} [get]
+// @Router       /api/v1/batches/{batchID} [get]
 func (h *NotificationHandler) GetBatch(c *gin.Context) {
 	batchID := c.Param("batchID")
 

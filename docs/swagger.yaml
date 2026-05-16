@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /
 definitions:
   handler.BatchResponse:
     properties:
@@ -134,7 +134,7 @@ info:
   title: Notification Service API
   version: "1.0"
 paths:
-  /batches/{batchID}:
+  /api/v1/batches/{batchID}:
     get:
       parameters:
       - description: Batch ID
@@ -156,21 +156,7 @@ paths:
       summary: Get batch statistics
       tags:
       - batches
-  /health:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Health check
-      tags:
-      - system
-  /notifications:
+  /api/v1/notifications:
     get:
       parameters:
       - description: Filter by status (pending,queued,processing,sent,failed,cancelled)
@@ -247,7 +233,7 @@ paths:
       summary: Create a notification
       tags:
       - notifications
-  /notifications/{id}:
+  /api/v1/notifications/{id}:
     delete:
       parameters:
       - description: Notification ID
@@ -290,7 +276,7 @@ paths:
       summary: Get notification by ID
       tags:
       - notifications
-  /notifications/batch:
+  /api/v1/notifications/batch:
     post:
       consumes:
       - application/json
@@ -319,4 +305,18 @@ paths:
       summary: Create a batch of notifications
       tags:
       - notifications
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - system
 swagger: "2.0"

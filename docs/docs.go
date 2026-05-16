@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/batches/{batchID}": {
+        "/api/v1/batches/{batchID}": {
             "get": {
                 "produces": [
                     "application/json"
@@ -49,29 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/health": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/notifications": {
+        "/api/v1/notifications": {
             "get": {
                 "produces": [
                     "application/json"
@@ -189,7 +167,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/notifications/batch": {
+        "/api/v1/notifications/batch": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -234,7 +212,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/notifications/{id}": {
+        "/api/v1/notifications/{id}": {
             "get": {
                 "produces": [
                     "application/json"
@@ -295,6 +273,28 @@ const docTemplate = `{
                         "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -495,7 +495,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Notification Service API",
 	Description:      "Scalable notification delivery service for SMS, Email, and Push channels with priority queuing, retry logic, and observability.",
