@@ -23,6 +23,7 @@ type CreateRequest struct {
 	Priority       domain.Priority
 	IdempotencyKey *string
 	ScheduledAt    *time.Time
+	Variables      map[string]string
 }
 
 type CreateBatchRequest struct {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"study-case/internal/metrics"
 	"study-case/internal/queue"
 	"time"
@@ -32,7 +33,7 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 		}
 	}
 
-	n := domain.NewNotification(req.Recipient, req.Channel, req.Content, req.Priority)
+	n := domain.NewNotification(req.Recipient, req.Channel, resolveTemplate(req.Content, req.Variables), req.Priority)
 	n.IdempotencyKey = req.IdempotencyKey
 	n.ScheduledAt = req.ScheduledAt
 
@@ -52,6 +53,13 @@ func (s *notificationService) Create(ctx context.Context, req CreateRequest) (*d
 	metrics.NotificationsCreated.WithLabelValues(string(n.Channel), string(n.Priority)).Inc()
 	s.log.Info().Str("id", n.ID).Str("channel", string(n.Channel)).Msg("notification created")
 	return n, nil
+}
+
+func resolveTemplate(content string, variables map[string]string) string {
+	for k, v := range variables {
+		content = strings.ReplaceAll(content, "{{"+k+"}}", v)
+	}
+	return content
 }
 
 func (s *notificationService) enqueue(ctx context.Context, n *domain.Notification) error {

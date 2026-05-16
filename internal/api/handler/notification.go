@@ -19,12 +19,13 @@ func NewNotificationHandler(svc service.Service) *NotificationHandler {
 }
 
 type CreateRequest struct {
-	Recipient      string  `json:"recipient"        binding:"required"`
-	Channel        string  `json:"channel"          binding:"required,oneof=sms email push"  example:"sms"`
-	Content        string  `json:"content"          binding:"required,max=1600"              example:"Your verification code is 123456"`
-	Priority       string  `json:"priority"         binding:"omitempty,oneof=high normal low" example:"normal"`
-	IdempotencyKey *string `json:"idempotency_key"`
-	ScheduledAt    *string `json:"scheduled_at"     example:"2026-01-01T12:00:00Z"`
+	Recipient      string            `json:"recipient"        binding:"required"`
+	Channel        string            `json:"channel"          binding:"required,oneof=sms email push"  example:"sms"`
+	Content        string            `json:"content"          binding:"required,max=1600"              example:"Hello {{name}}, your code is {{code}}"`
+	Priority       string            `json:"priority"         binding:"omitempty,oneof=high normal low" example:"normal"`
+	IdempotencyKey *string           `json:"idempotency_key"`
+	ScheduledAt    *string           `json:"scheduled_at"     example:"2026-01-01T12:00:00Z"`
+	Variables      map[string]string `json:"variables"`
 }
 
 type CreateBatchRequest struct {
@@ -70,6 +71,7 @@ func (h *NotificationHandler) Create(c *gin.Context) {
 		Content:        req.Content,
 		Priority:       priority,
 		IdempotencyKey: req.IdempotencyKey,
+		Variables:      req.Variables,
 	}
 
 	if req.ScheduledAt != nil {
