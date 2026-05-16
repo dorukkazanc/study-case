@@ -94,12 +94,13 @@ func (w *Worker) handleFailure(ctx context.Context, notification *domain.Notific
 		if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusFailed); err != nil {
 			return
 		}
+		notification.MarkFailed("retry limit reached")
 		return
 	}
-	notification.MarkFailed(err.Error())
 	if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusQueued, domain.WithErrorMessage(err.Error())); err != nil {
 		return
 	}
+	notification.MarkQueued()
 	delay := 5 * time.Second * (1 << notification.RetryCount)
 	if err := w.queue.EnqueueDelayed(ctx, notification, delay); err != nil {
 		return

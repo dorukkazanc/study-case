@@ -65,6 +65,32 @@ func TestProcess_Failure(t *testing.T) {
 
 	w.Process(ctx, n)
 
-	assert.Equal(t, domain.StatusFailed, n.Status)
+	assert.Equal(t, domain.StatusQueued, n.Status)
+}
 
+func TestProcess_DeadLetter(t *testing.T) {
+	n := domain.NewNotification("+901111111", domain.ChannelSMS, "test", domain.PriorityNormal)
+	n.RetryCount = 2
+
+	repo := &mockRepository{
+		UpdateStatusFn: func(ctx context.Context, id string, status domain.Status, opts ...domain.UpdateOption) error {
+			return nil
+		},
+	}
+	provider := &mockProvider{
+		SendFn: func(ctx context.Context, n *domain.Notification) (string, error) {
+			return "", fmt.Errorf("test fail")
+		},
+	}
+	ctx := context.Background()
+
+	w := newWorker(worker.Config{
+		Concurrency:  1,
+		MaxRetries:   2,
+		PollInterval: time.Second * 5,
+	}, repo, provider, &mockQueue{})
+
+	w.Process(ctx, n)
+
+	assert.Equal(t, domain.StatusFailed, n.Status)
 }
