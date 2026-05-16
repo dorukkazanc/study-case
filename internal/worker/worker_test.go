@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 
 	domain "study-case/internal/domain/notification"
@@ -13,7 +14,7 @@ import (
 )
 
 func newWorker(cfg worker.Config, repo *mockRepository, provider *mockProvider, q *mockQueue) *worker.Worker {
-	return worker.NewWorker(cfg, q, repo, provider)
+	return worker.NewWorker(cfg, q, repo, provider, zerolog.Nop())
 }
 
 func TestProcess_Success(t *testing.T) {
