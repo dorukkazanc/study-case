@@ -35,6 +35,14 @@ curl -X POST http://localhost:8080/api/v1/notifications \
   }'
 ```
 
+## Testler
+
+```bash
+go test ./...
+```
+
+Mock tabanlı unit testler mevcut (`service`, `worker`). Repo, Redis ve goroutine/concurrency testleri integration gerektirdiği için eklemedim.
+
 ## Nasıl Çalışır
 
 1. İstek gelir, notification DB'ye kaydedilir ve Redis priority queue'ya eklenir
