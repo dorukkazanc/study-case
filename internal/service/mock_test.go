@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"study-case/internal/domain/notification"
 	"time"
 
 	domain "study-case/internal/domain/notification"
@@ -17,6 +18,11 @@ type mockRepository struct {
 	GetBatchFn               func(ctx context.Context, batchID string) (*domain.Batch, error)
 	UpdateBatchCountersFn    func(ctx context.Context, batchID string, from, to domain.Status) error
 	ExistsByIdempotencyKeyFn func(ctx context.Context, key string) (bool, error)
+}
+
+func (m *mockRepository) UpdateStatusBatch(ctx context.Context, id string, status notification.Status) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m *mockRepository) Create(ctx context.Context, n *domain.Notification) error {

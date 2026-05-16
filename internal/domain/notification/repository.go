@@ -12,6 +12,7 @@ type Repository interface {
 	GetBatch(ctx context.Context, batchID string) (*Batch, error)
 	UpdateBatchCounters(ctx context.Context, batchID string, from, to Status) error
 	ExistsByIdempotencyKey(ctx context.Context, key string) (bool, error)
+	UpdateStatusBatch(ctx context.Context, id string, status Status) error
 }
 
 type UpdateOption func(*UpdateParams)

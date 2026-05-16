@@ -14,6 +14,11 @@ type NotificationRepository struct {
 	db *gorm.DB
 }
 
+func (r *NotificationRepository) UpdateStatusBatch(ctx context.Context, id string, status notification.Status) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewNotificationRepository(db *gorm.DB) *NotificationRepository {
 	return &NotificationRepository{db: db}
 }
