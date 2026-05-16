@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	queue3 "study-case/internal/queue"
 	"study-case/internal/queue/redis"
+	"study-case/internal/worker"
 	"syscall"
 	"time"
 
@@ -37,9 +39,18 @@ func main() {
 	})
 
 	repo := pgrepo.NewNotificationRepository(db)
-	queue := redis.NewPriorityQueue(rds)
+	pq := redis.NewPriorityQueue(rds)
+	queue := queue3.Queue(pq)
 	svc := service.NewNotificationService(repo, queue)
 	router := api.NewNotificationRouter(svc)
+	promoter := redis.NewPromoter(rds, pq, time.Minute)
+	provider := webhook.NewClient(cfg.Provider.WebhookURL, cfg.Provider.Timeout)
+
+	w := worker.NewWorker(worker.Config{
+		Concurrency:  3,
+		MaxRetries:   3,
+		PollInterval: 500 * time.Millisecond,
+	}, pq, repo, provider)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
@@ -47,9 +58,11 @@ func main() {
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	go promoter.Start(ctx)
+	go w.Run(ctx)
 
 	go func() {
 		log.Printf("server started on :%s", cfg.Server.Port)

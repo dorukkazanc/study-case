@@ -9,7 +9,6 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 
 	domain "study-case/internal/domain/notification"
-	"study-case/internal/queue"
 )
 
 const (
@@ -27,7 +26,7 @@ type PriorityQueue struct {
 	client *goredis.Client
 }
 
-func NewPriorityQueue(client *goredis.Client) queue.Queue {
+func NewPriorityQueue(client *goredis.Client) *PriorityQueue {
 	return &PriorityQueue{client: client}
 }
 
