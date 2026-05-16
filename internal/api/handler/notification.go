@@ -32,11 +32,13 @@ type createBatchRequest struct {
 }
 
 type listQuery struct {
-	Status   string `form:"status"`
-	Channel  string `form:"channel"`
-	BatchID  string `form:"batch_id"`
-	Page     int    `form:"page,default=1"`
-	PageSize int    `form:"page_size,default=20"`
+	Status    string `form:"status"`
+	Channel   string `form:"channel"`
+	BatchID   string `form:"batch_id"`
+	Page      int    `form:"page,default=1"`
+	PageSize  int    `form:"page_size,default=20"`
+	StartDate string `form:"start_date"`
+	EndDate   string `form:"end_date"`
 }
 
 func (h *NotificationHandler) Create(c *gin.Context) {
@@ -135,6 +137,22 @@ func (h *NotificationHandler) List(c *gin.Context) {
 	filter := domain.Filter{
 		Page:     q.Page,
 		PageSize: q.PageSize,
+	}
+	if q.StartDate != "" {
+		t, err := time.Parse(time.RFC3339, q.StartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date format"})
+			return
+		}
+		filter.StartDate = &t
+	}
+	if q.EndDate != "" {
+		t, err := time.Parse(time.RFC3339, q.EndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date format"})
+			return
+		}
+		filter.EndDate = &t
 	}
 	if q.Status != "" {
 		s := domain.Status(q.Status)
