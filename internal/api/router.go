@@ -4,6 +4,7 @@ import (
 	"study-case/internal/api/middleware"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 
 	"study-case/internal/api/handler"
@@ -32,6 +33,8 @@ func NewNotificationRouter(notifSvc service.Service, log zerolog.Logger) *gin.En
 
 		v1.GET("/batches/:batchID", n.GetBatch)
 	}
+
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	return r
 }
