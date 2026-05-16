@@ -90,6 +90,10 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 		return
 	}
 
+	if n.BatchID != nil {
+		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, n.Status, domain.StatusProcessing)
+	}
+
 	id, err := w.provider.Send(ctx, n)
 	if err != nil {
 		w.handleFailure(ctx, n, err)
@@ -100,26 +104,34 @@ func (w *Worker) Process(ctx context.Context, n *domain.Notification) {
 	if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusSent, domain.WithProviderID(id)); err != nil {
 		return
 	}
+
+	if n.BatchID != nil {
+		_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, n.Status)
+	}
 }
 
-func (w *Worker) handleFailure(ctx context.Context, notification *domain.Notification, err error) {
-	if notification.RetryCount >= w.cfg.MaxRetries {
-		e := w.queue.MoveToDead(ctx, notification)
+func (w *Worker) handleFailure(ctx context.Context, n *domain.Notification, err error) {
+	if n.RetryCount >= w.cfg.MaxRetries {
+		e := w.queue.MoveToDead(ctx, n)
 		if e != nil {
 			return
 		}
-		if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusFailed); err != nil {
+		if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusFailed); err != nil {
 			return
 		}
-		notification.MarkFailed("retry limit reached")
+		n.MarkFailed("retry limit reached")
+
+		if n.BatchID != nil {
+			_ = w.repo.UpdateBatchCounters(ctx, *n.BatchID, domain.StatusProcessing, n.Status)
+		}
 		return
 	}
-	if err := w.repo.UpdateStatus(ctx, notification.ID, domain.StatusQueued, domain.WithErrorMessage(err.Error())); err != nil {
+	if err := w.repo.UpdateStatus(ctx, n.ID, domain.StatusQueued, domain.WithErrorMessage(err.Error())); err != nil {
 		return
 	}
-	notification.MarkQueued()
-	delay := 5 * time.Second * (1 << notification.RetryCount)
-	if err := w.queue.EnqueueDelayed(ctx, notification, delay); err != nil {
+	n.MarkQueued()
+	delay := 5 * time.Second * (1 << n.RetryCount)
+	if err := w.queue.EnqueueDelayed(ctx, n, delay); err != nil {
 		return
 	}
 
