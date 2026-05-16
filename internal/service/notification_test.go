@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -236,4 +237,35 @@ func TestCreateBatch_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.Count)
 	assert.NotEmpty(t, result.BatchID)
+}
+
+func TestCreate_Scheduled_Success(t *testing.T) {
+	enqueueDelayed := false
+	repo := &mockRepository{}
+	queue := &mockQueue{
+		EnqueueFn: func(ctx context.Context, n *domain.Notification) error {
+			t.Fatal("Enqueue should not be called for scheduled notification")
+			return nil
+		},
+		EnqueueDelayedFn: func(ctx context.Context, n *domain.Notification, delay time.Duration) error {
+			enqueueDelayed = true
+			return nil
+		},
+	}
+
+	s := newService(repo, queue)
+	ctx := context.Background()
+
+	scheduledAt := time.Now().Add(20 * time.Second)
+	result, err := s.Create(ctx, service.CreateRequest{
+		Recipient:   "+9011111111",
+		Channel:     domain.ChannelSMS,
+		Content:     "test",
+		Priority:    domain.PriorityNormal,
+		ScheduledAt: &scheduledAt,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, enqueueDelayed)
+	assert.NotNil(t, result.ScheduledAt)
 }

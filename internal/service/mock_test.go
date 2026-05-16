@@ -26,7 +26,10 @@ func (m *mockRepository) UpdateStatusBatch(ctx context.Context, id string, statu
 }
 
 func (m *mockRepository) Create(ctx context.Context, n *domain.Notification) error {
-	return m.CreateFn(ctx, n)
+	if m.CreateFn != nil {
+		return m.CreateFn(ctx, n)
+	}
+	return nil
 }
 
 func (m *mockRepository) CreateBatch(ctx context.Context, notifications []*domain.Notification, batch *domain.Batch) error {
@@ -42,7 +45,10 @@ func (m *mockRepository) List(ctx context.Context, filter domain.Filter) ([]*dom
 }
 
 func (m *mockRepository) UpdateStatus(ctx context.Context, id string, status domain.Status, opts ...domain.UpdateOption) error {
-	return m.UpdateStatusFn(ctx, id, status, opts...)
+	if m.UpdateStatusFn != nil {
+		return m.UpdateStatusFn(ctx, id, status, opts...)
+	}
+	return nil
 }
 
 func (m *mockRepository) Cancel(ctx context.Context, id string) error {
@@ -62,13 +68,26 @@ func (m *mockRepository) ExistsByIdempotencyKey(ctx context.Context, key string)
 }
 
 type mockQueue struct {
+	EnqueueFn        func(ctx context.Context, n *domain.Notification) error
+	EnqueueDelayedFn func(ctx context.Context, n *domain.Notification, delay time.Duration) error
 }
 
-func (m *mockQueue) Enqueue(ctx context.Context, n *domain.Notification) error { return nil }
+func (m *mockQueue) Enqueue(ctx context.Context, n *domain.Notification) error {
+	if m.EnqueueFn != nil {
+		return m.EnqueueFn(ctx, n)
+	}
+	return nil
+}
+
 func (m *mockQueue) Dequeue(ctx context.Context, ch domain.Channel) (*domain.Notification, error) {
 	return nil, nil
 }
+
 func (m *mockQueue) EnqueueDelayed(ctx context.Context, n *domain.Notification, delay time.Duration) error {
+	if m.EnqueueDelayedFn != nil {
+		return m.EnqueueDelayedFn(ctx, n, delay)
+	}
 	return nil
 }
+
 func (m *mockQueue) MoveToDead(ctx context.Context, n *domain.Notification) error { return nil }
