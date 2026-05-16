@@ -2,7 +2,9 @@ package worker_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -10,12 +12,8 @@ import (
 	"study-case/internal/worker"
 )
 
-func newWorker(repo *mockRepository, provider *mockProvider, q *mockQueue) *worker.Worker {
-	return worker.NewWorker(worker.Config{
-		Concurrency:  1,
-		MaxRetries:   3,
-		PollInterval: 0,
-	}, q, repo, provider)
+func newWorker(cfg worker.Config, repo *mockRepository, provider *mockProvider, q *mockQueue) *worker.Worker {
+	return worker.NewWorker(cfg, q, repo, provider)
 }
 
 func TestProcess_Success(t *testing.T) {
@@ -33,9 +31,40 @@ func TestProcess_Success(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	w := newWorker(repo, provider, &mockQueue{})
+	w := newWorker(worker.Config{
+		Concurrency:  3,
+		MaxRetries:   3,
+		PollInterval: time.Second * 5,
+	}, repo, provider, &mockQueue{})
 	w.Process(ctx, n)
 
 	assert.Equal(t, domain.StatusSent, n.Status)
 	assert.Equal(t, "test-123", *n.ProviderID)
+}
+
+func TestProcess_Failure(t *testing.T) {
+	n := domain.NewNotification("+901111111", domain.ChannelSMS, "test", domain.PriorityNormal)
+
+	repo := &mockRepository{
+		UpdateStatusFn: func(ctx context.Context, id string, status domain.Status, opts ...domain.UpdateOption) error {
+			return nil
+		},
+	}
+	provider := &mockProvider{
+		SendFn: func(ctx context.Context, n *domain.Notification) (string, error) {
+			return "", fmt.Errorf("test fail")
+		},
+	}
+	ctx := context.Background()
+
+	w := newWorker(worker.Config{
+		Concurrency:  1,
+		MaxRetries:   2,
+		PollInterval: time.Second * 5,
+	}, repo, provider, &mockQueue{})
+
+	w.Process(ctx, n)
+
+	assert.Equal(t, domain.StatusFailed, n.Status)
+
 }

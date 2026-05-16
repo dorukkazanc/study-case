@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"study-case/internal/provider/webhook"
 	queue3 "study-case/internal/queue"
 	"study-case/internal/queue/redis"
 	"study-case/internal/worker"
@@ -66,7 +68,7 @@ func main() {
 
 	go func() {
 		log.Printf("server started on :%s", cfg.Server.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
